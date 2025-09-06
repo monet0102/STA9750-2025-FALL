@@ -1,0 +1,16 @@
+---
+title: "SILKSONG"
+author: "SAONI"
+format: html
+editor: visual
+---
+
+## BEST GAME OF 2025
+
+SILKSONG, (Hollow knight 2) has become one of the best games of 2025.
+```{r}
+#| include: false
+1+1
+```
+--------------
+Last Updated: `r format(Sys.time(), "%A %m %d, %Y at %H:%M%p")`
