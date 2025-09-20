@@ -16,4 +16,6 @@ SILKSONG, (Hollow knight 2) has become one of the best games of 2025.
 
 ------------------------------------------------------------------------
 
+![](images/clipboard-3001865770.png)
+
 Last Updated: `r format(Sys.time(), "%A %m %d, %Y at %H:%M%p")`
