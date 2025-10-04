@@ -1,0 +1,375 @@
+---
+title: "Top 10 Netflix Films/Shows"
+format: html
+Author: Monet
+theme: morph
+code-fold: true
+code-summary: "show/hide code"
+---
+```{r setup, include=FALSE}
+
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(DT)
+
+knitr::opts_chunk$set(
+  echo = TRUE,     
+  warning = FALSE,  
+  message = FALSE   
+)
+```
+## Acquire Data
+```{r}
+if(!dir.exists(file.path("data", "mp01"))){
+    dir.create(file.path("data", "mp01"), showWarnings=FALSE, recursive=TRUE)
+}
+
+GLOBAL_TOP_10_FILENAME <- file.path("data", "mp01", "global_top10_alltime.csv")
+
+if(!file.exists(GLOBAL_TOP_10_FILENAME)){
+    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv", 
+                  destfile=GLOBAL_TOP_10_FILENAME)
+}
+
+COUNTRY_TOP_10_FILENAME <- file.path("data", "mp01", "country_top10_alltime.csv")
+
+if(!file.exists(COUNTRY_TOP_10_FILENAME)){
+    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv", 
+                  destfile=COUNTRY_TOP_10_FILENAME)
+}
+```
+## Data Acquisition
+
+```{r}
+if(!require("tidyverse")) { install.packages("tidyverse") 
+  }
+library(readr) 
+library(dplyr) 
+GLOBAL_TOP_10 <- read_tsv(GLOBAL_TOP_10_FILENAME)
+glimpse(GLOBAL_TOP_10)
+```
+## Data cleaning
+
+```{r}
+GLOBAL_TOP_10 <- GLOBAL_TOP_10 |> mutate(season_title = if_else(season_title == "N/A", NA_character_, season_title))
+```
+## Data Importing
+
+```{r}
+COUNTRY_TOP_10 <- read_tsv(COUNTRY_TOP_10_FILENAME)
+glimpse(COUNTRY_TOP_10)
+```
+### Data cleaning
+
+```{r}
+COUNTRY_TOP_10 <- COUNTRY_TOP_10 |> mutate(season_title = if_else(season_title == "N/A", NA_character_, season_title))
+
+
+```
+### Data Exploration
+
+```{r}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+install.packages("DT")
+library(DT)
+GLOBAL_TOP_10 |> 
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE))
+
+library(stringr)
+library(stringr)
+format_titles <- function(df){
+    colnames(df) <- str_replace_all(colnames(df), "_", " ") |> str_to_title()
+    df
+}
+
+GLOBAL_TOP_10 |> 
+    format_titles() |>
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE)) |>
+    formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+
+GLOBAL_TOP_10 |> 
+    select(-season_title) |>
+    format_titles() |>
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE)) |>
+    formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+GLOBAL_TOP_10 |> 
+    mutate(`runtime_(minutes)` = round(60 * runtime)) |>
+    select(-season_title, 
+           -runtime) |>
+    format_titles() |>
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE)) |>
+    formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+```
+**How many different countries does Netflix operate in?** (You can use the viewing history as a proxy for countries in which Netflix operates.)
+```{r}
+library (dplyr) 
+num_countries <- COUNTRY_TOP_10 %>% summarise(n = n_distinct(country_name))
+```
+num_countries 94 countries
+
+**Which non-English-language film has spent the most cumulative weeks in the global top 10?** **How many weeks did it spend?**
+  
+```{r}
+library (dplyr) 
+
+top_non_english <- GLOBAL_TOP_10 %>% 
+  filter (category == "Films (Non-English)") %>% arrange (desc(cumulative_weeks_in_top_10)) %>% slice_head(n=1) %>% 
+select(show_title, cumulative_weeks_in_top_10)
+
+print(top_non_english)
+```
+All Quiet on the Western Front spent 23 weeks in the global 10.
+
+**What is the longest film (English or non-English) to have ever appeared in the Netflix global Top 10? How long is it in minutes?**
+```{r}
+library(dplyr)
+
+longest_film <- GLOBAL_TOP_10 %>% filter(grepl ("Films",category) &!is.na(runtime)) %>%
+group_by(show_title) %>% summarise(max_runtime = max(runtime), .groups = "drop") %>% arrange(desc(max_runtime)) %>% slice_head(n = 1)
+
+print(longest_film)
+```
+Pushpa 2: The Rule (Reloaded Version) with 3.73 hours.
+
+**For each of the four categories, what program has the most total hours of global viewership?**
+```{r}
+library(dplyr) 
+top_programs <- GLOBAL_TOP_10 %>% group_by (category) %>% summarise (total_hours = sum(weekly_hours_viewed,na.rm= TRUE), .groups="drop") %>% slice_max(total_hours, n=1)
+
+print(top_programs)
+```
+TV (English) 663,111,30000
+
+**Which TV show had the longest run in a country’s Top 10? How long was this run and in what country did it occur?**
+```{r}
+library(dplyr) 
+Longest_run <- COUNTRY_TOP_10 %>% arrange(desc(cumulative_weeks_in_top_10)) %>% slice_head(n=1) %>% select(show_title, cumulative_weeks_in_top_10, country_name)
+
+print(Longest_run)
+```
+Money Heist with 127 min runtime in Pakistan
+
+**Netflix provides over 200 weeks of service history for all but one country in our data set. Which country is this and when did Netflix cease operations in that country?**
+```{r}
+library (dplyr) 
+
+COUNTRY_TOP_10 %>% group_by(country_name) %>% 
+summarise( total_weeks = n_distinct(week), last_week = max(week), .groups = "drop" ) %>% filter(total_weeks < 200) 
+
+```
+Russia with 35 weeks and it ceased on 2022-02-27
+
+**The movie Red Notice has a runtime of 1 hour and 58 minutes. Approximately how many views did it receive in 2021? Note that Netflix does not provide the weekly_views values that far back in the past, but you can compute it yourself using the total view time and the runtime.**
+```{r}
+library (dplyr) 
+library (lubridate) 
+
+runtime_hours <- 1 + 58/60 
+runtime_hours 
+
+red_notice_hours <- GLOBAL_TOP_10 %>% 
+  filter (show_title == "Red Notice", year(week)== 2021) %>% summarise(total_hours = sum(weekly_hours_viewed,na.rm=TRUE))
+
+print(red_notice_hours)
+
+total_hours <- red_notice_hours$total_hours
+views <- total_hours / runtime_hours
+
+views
+```
+201,732,203 runtime hours views.
+
+**How many Films reached Number 1 in the US but did not originally debut there? That is, find films that first appeared on the Top 10 chart at, e.g., Number 4 but then became more popular and eventually hit Number 1? What is the most recent film to pull this off?**
+```{r}
+library (dplyr) 
+
+Films_reached_number_1 <- COUNTRY_TOP_10 %>%
+  filter(country_name == "united states", category == "Films") %>%
+  group_by(show_title) %>%
+  summarise(
+    first_rank = first(weekly_rank[!is.na(weekly_rank)]),
+    max_rank = min(weekly_rank, na.rm = TRUE),
+    last_week = max(week, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  filter(max_rank == 1 & first_rank != 1) %>%
+  arrange(desc(last_week))
+
+most_recent_film <-
+  Films_reached_number_1$show_title[1]
+
+print(Films_reached_number_1)
+print(most_recent_film)
+```
+NA
+
+**Which TV show/season hit the top 10 in the most countries in its debut week? In how many countries did it chart?**
+```{r}
+library (dplyr) 
+
+Top_10_in_most_countries <- COUNTRY_TOP_10 %>%
+  group_by(show_title) %>%
+  summarise(debut_week = min(week, na.rm = TRUE), .groups = "drop") %>%
+  left_join(COUNTRY_TOP_10, by = "show_title") %>%
+  filter(week == debut_week) %>%
+  group_by(show_title) %>%
+  summarise(countries_count = n_distinct(country_name), .groups = "drop") %>%
+  arrange(desc(countries_count))
+
+if (nrow(Top_10_in_most_countries) > 0) {
+  Top_show <- Top_10_in_most_countries %>% slice_head(n = 1)
+  print(Top_show)
+} else {
+  print("No data found.")
+}
+```
+Army of Thieves hit the most top 10 in 94 countries
+
+# PRESS RELEASE 1 : Upcoming Season of Stranger Things 
+## Vecna Might Have Escaped… But Season 5 Will Not!
+Netflix will release the fifth and final season of its hit show Stranger Things at the end of 2025. From exploring the Upside Down and rescuing Will, to saving Max with Running Up That Hill by Kate Bush, Season 5 promises more thrills, chills, and mysteries than ever. Fans will finally uncover more about Eleven’s powers and Papa’s shadowy past. The previous four seasons have captivated viewers worldwide, accumulating 2.9 billion hours of total viewership and remaining in the global Top 10 for 20 weeks.
+
+Stranger Things has also demonstrated remarkable multinational appeal, with previous seasons charting in 93, 91, and 90 countries, making it a true global phenomenon. Compared to other English-language TV shows, it consistently ranks at the top for total viewership and weeks in the Top 10. As fans await Season 5, the series promises to deliver even more excitement, surprises, and unforgettable moments to close out this iconic saga.
+```{r}
+Total_Viewership <- GLOBAL_TOP_10 %>%
+  filter(show_title == "Stranger Things", category == "TV (English)") %>%
+  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE))
+
+print(Total_Viewership)
+
+```
+
+```{r}
+Length_of_popularity <- GLOBAL_TOP_10 %>%
+  filter(show_title == "Stranger Things", category == "TV (English)") %>% 
+  summarise(Total_weeks = n_distinct(week))
+
+print(Length_of_popularity)
+```
+```{r}
+Multinational_appeal <- COUNTRY_TOP_10 %>%
+  filter(show_title == "Stranger Things", category == "TV") %>%
+  group_by(season_title) %>%
+  summarise(Countries_count = n_distinct(country_name), .groups = "drop") %>%
+  arrange(desc(Countries_count))
+
+print(Multinational_appeal)
+```
+```{r}
+Top_English_TV <- GLOBAL_TOP_10 %>%
+  filter(category == "TV (English)") %>%
+  group_by(show_title) %>%
+  summarise(
+    Total_Hours = sum(weekly_hours_viewed, na.rm = TRUE),
+    Total_Weeks = n_distinct(week),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(Total_Hours))
+
+print(Top_English_TV)
+```
+# PRESS RELEASE 2: Commercial Success in India
+## Bollywood is Growing!
+Bollywood has become increasingly popular over the years, gaining more views for their shows while also adding international content. Popular global hits like Money Heist, Squid Game, and Wednesday stayed in India’s top 10 for more than 35 weeks, demonstrating strong engagement. Assuming that each top-10 Hindi show accounts for approximately 10,000 hours of viewing per week, Netflix estimates a total of 6.5 million of hours viewed across the top Hindi shows, translating to roughly 164 thousand of estimated users.
+
+India has also seen unique local hits that did not chart in the U.S., including films like Kantara, Hi Papa, and Sir. These shows highlight the distinct preferences of the Indian audience and reinforce the long-term growth potential for Netflix in this populated market. With consistent engagement from both Hindi-language content and popular international shows, India represents a major opportunity for continued subscriber growth.
+```{R}
+library(dplyr)
+India_Content <- COUNTRY_TOP_10 %>%
+  filter(country_name == "India") %>%
+  group_by(show_title, category) %>%
+  summarise(
+    Total_Weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(Total_Weeks))
+
+head(India_Content, 10)
+
+```
+```{r}
+library(dplyr)
+library(stringr)
+library(dplyr)
+library(stringr)
+
+Hindi_Content <- COUNTRY_TOP_10 %>%
+  filter(country_name == "India", str_detect(show_title, "\\(Hindi\\)"))
+
+
+hours_per_week_per_show <- 10000
+
+Hindi_Customers <- Hindi_Content %>%
+  summarise(
+    Total_Hours = sum(cumulative_weeks_in_top_10 * hours_per_week_per_show, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+
+    Estimated_Users = Total_Hours / (4 * 10)
+  )
+
+Hindi_Customers
+
+
+
+```
+```{r}
+library(dplyr)
+India_Hindi <- COUNTRY_TOP_10 %>%
+  filter(country_name == "India", str_detect(show_title, "\\(Hindi\\)")) %>%
+  select(show_title, category, weekly_rank, cumulative_weeks_in_top_10)
+
+
+US_Shows <- COUNTRY_TOP_10 %>%
+  filter(country_name == "United States") %>%
+  pull(show_title) %>%
+  unique()
+
+India_only_Hindi <- India_Hindi %>%
+  filter(!show_title %in% US_Shows) %>%
+  arrange(desc(cumulative_weeks_in_top_10))
+
+head(India_only_Hindi, 10)
+
+```
+# PRESS RELEASE 3: MY OWN TOPIC
+## East Asian shows and their growth in Netflix.
+Netflix is gaining a global popularity Content on East Asia with shows and films, from Korea, Japan, China, Taiwan and Thailand. Thailand leads the region with 8 distinct titles topping local charts for a combined 129 weeks, followed by Hong Kong (4 shows, 24 weeks) and Singapore (3 shows, 5 weeks). Standout hits include MasterChef The Professionals Thailand (45 weeks), The Face Thailand (36 weeks), and The Voice Thailand 2024 (36 weeks). Many shows, such as Strange Frequencies: Taiwan Killer Hospital and A Korean Odyssey, have charted in multiple countries, highlighting the broad international appeal of East Asian shows.
+
+These shows are also gaining traction in the Americas and other global markets, signaling strong opportunities for subscriber growth. Netflix’s investment in East Asian content demonstrates its commitment to offering culturally relevant programming that resonates worldwide. With audiences increasingly seeking international content, these titles represent both current success and long-term growth potential for Netflix across multiple regions.
+```{r}
+library(dplyr)
+library(stringr)
+EastAsia_Shows <- COUNTRY_TOP_10 %>%
+  filter(str_detect(show_title, regex("Korean|Japanese|Chinese|Taiwan|Thailand", ignore_case = TRUE)))
+
+
+Shows_per_Country <- EastAsia_Shows %>%
+  group_by(country_name) %>%
+  summarise(
+    Num_Shows = n_distinct(show_title),
+    Total_Weeks = sum(cumulative_weeks_in_top_10, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(Num_Shows))
+
+print(Shows_per_Country)
+
+Top_Shows_Global <- EastAsia_Shows %>%
+  group_by(show_title) %>%
+  summarise(
+    Total_Weeks_Global = sum(cumulative_weeks_in_top_10, na.rm = TRUE),
+    Countries = n_distinct(country_name),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(Total_Weeks_Global))
+
+print(Top_Shows_Global)
+
+```
