@@ -4,17 +4,22 @@ project:
 
 website:
   title: "STA 9750 Submission Material"
-  description:
-    Course Projects for STA 9750 at Baruch College
-  site-url: "https://<monet0102>.github.io/STA9750-2025-FALL/"
+  description: "Course Projects for STA 9750 at Baruch College"
+  site-url: "https://monet0102.github.io/STA9750-2025-FALL/"
   navbar:
     background: primary
     search: false
-    
+
 format:
   html:
-    theme: morph
-    toc: false
+    theme: journal
+    code-fold: true
+    code-summary: "Show/Hide Code"
+    code-tools: true
+    toc: true
+    toc-location: left
+    toc-depth: 3
+    smooth-scroll: true
+    page-layout: full
+    highlight-style: atom-one-dark
 
-editor:
-  mode: source
