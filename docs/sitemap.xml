@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://&lt;monet0102&gt;.github.io/STA9750-2025-FALL/index.html</loc>
+    <loc>https://monet0102.github.io/STA9750-2025-FALL/mp02.html</loc>
+    <lastmod>2025-11-01T19:57:00.131Z</lastmod>
+  </url>
+  <url>
+    <loc>https://monet0102.github.io/STA9750-2025-FALL/index.html</loc>
     <lastmod>2025-09-20T03:56:19.647Z</lastmod>
+  </url>
+  <url>
+    <loc>https://monet0102.github.io/STA9750-2025-FALL/mp01.html</loc>
+    <lastmod>2025-10-04T02:39:03.092Z</lastmod>
   </url>
 </urlset>
