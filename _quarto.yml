@@ -15,11 +15,10 @@ format:
     theme: journal
     code-fold: true
     code-summary: "Show/Hide Code"
-    code-tools: true
     toc: true
     toc-location: left
     toc-depth: 3
     smooth-scroll: true
     page-layout: full
-    highlight-style: atom-one-dark
+    
 
