@@ -1,4 +1,3 @@
-
 ---
 title: "Making Backyards Affordable for All"
 author: "Monet"
@@ -8,6 +7,7 @@ execute:
   message: false
 editor: visual
 ---
+
 ```{r setup, include=FALSE}
 library(knitr)
 library(DT)
@@ -21,7 +21,6 @@ knit_print.data.frame <- function(x, ...) {
   )
 }
 ```
-
 
 ## DATA ACQUISITION
 
@@ -144,7 +143,6 @@ get_building_permits <- function(start_year = 2009, end_year = 2023){
 
 PERMITS <- get_building_permits()
 ```
-
 
 ```{r}
 library(httr2)
@@ -272,14 +270,10 @@ WAGES <- get_bls_qcew_annual_averages()
 
 ![](data_relationship_diagram.png)
 
+The data relationship diagram shows the structure of the data sets used for this analysis. Each data set represents a socioeconomic or labor-related measure by U.S. metropolitan area and year. The ACS-derived data sets can be joined using shared keys (GEOID or CBSA, and year).The Bureau of Labor Statistics (BLS) dataset WAGES uses FIPS and YEAR, which correspond to GEOID and year, respectively, and includes industry codes that can be expanded using the INDUSTRY_CODES table. Together, these relationships enable the integration of demographic, housing, and labor-market indicators into a unified analytic framework.
 
+# The CBSA (by name) Which permitted the largest number of new housing units in the decade from 2010 to 2019
 
-The data relationship diagram  shows the structure of the data sets used for this analysis. Each data set represents a socioeconomic or labor-related measure by U.S. metropolitan area and year. The ACS-derived data sets  can be joined using shared keys (GEOID or CBSA, and year).The Bureau of Labor Statistics (BLS) dataset WAGES uses FIPS and YEAR, which correspond to GEOID and year, respectively, and includes industry codes that can be expanded using the INDUSTRY_CODES table.
-Together, these relationships enable the integration of demographic, housing, and labor-market indicators into a unified analytic framework.
-
-
-
-# The CBSA (by name) Which permitted the largest number of new housing units in the decade from 2010 to 2019 
 ```{r}
 library(dplyr)
 library(stringr)
@@ -318,9 +312,10 @@ permits_2010_2019 <- permits_named |>
 
 permits_2010_2019 |> slice_head(n = 1) ## question 1 code, Since all of the others data sets don't have CBSA I standardized the geographic identifiers in both data sets by creating a new numeric variable (std_cbsa) that matched the CBSA codes from PERMITS with the GEOID values from INCOME. Then, I removed duplicates and kept one unique area name per code using distinct(), which allowed me to join the data sets cleanly and identify which CBSA name had the most new housing permits.
 ```
+
 Houston–Pasadena–The Woodlands, TX Metropolitan Area permitted the largest number of new housing units (482,075) between 2010 and 2019.
 
-## Year that the  Albuquerque, NM (CBSA Number 10740) permit the most new housing units
+## Year that the Albuquerque, NM (CBSA Number 10740) permit the most new housing units
 
 ```{r}
 library(dplyr)
@@ -346,10 +341,10 @@ abq_pre_covid <- abq_years |>
 abq_pre_covid ##     re-run excluding 2020–2021 (common pandemic reporting quirks)
 ```
 
-They permitted the largest number of new housing units in 2022 (2,852 units).
-However, this spike likely reflects a COVID-19 reporting artifact, as permits delayed during 2020–2021 were recorded later.
+They permitted the largest number of new housing units in 2022 (2,852 units). However, this spike likely reflects a COVID-19 reporting artifact, as permits delayed during 2020–2021 were recorded later.
 
 ## State (not CBSA) Which had the highest average individual income in 2015
+
 ```{R}
 library(dplyr)
 library(stringr)
@@ -387,8 +382,9 @@ state_income |> slice_head(n = 1) ## Display the top state
 ```
 
 Which was DC, with a total income of 202,663,489,140.
-  
+
 ## Ata scientists and business analysts are recorded under NAICS code 5182. The last year in which the NYC CBSA had the most data scientists in the country
+
 ```{r}
 library(dplyr)
 
@@ -415,8 +411,8 @@ nyc_last_year <- top_by_year %>%
 nyc_last_year
 
 ```
-Which was 2015.
-After 2015, the San Francisco–Oakland–Berkeley CBSA (C4186) surpassed New York in total data-science employment.
+
+Which was 2015. After 2015, the San Francisco–Oakland–Berkeley CBSA (C4186) surpassed New York in total data-science employment.
 
 # Fraction of total wages in the NYC CBSA was earned by people employed in the finance and insurance industries (NAICS code 52) and year in wich this fraction peak
 
@@ -437,8 +433,8 @@ nyc_finance_share |> slice_head(n = 1)
 
 In 2014, approximately 4.6% of all wages paid in the New York CBSA came from the Finance and Insurance industry (NAICS 52).
 
-
 ## The relationship between monthly rent and average household income per CBSA in 2009.
+
 ```{R}
 library(dplyr)
 library(ggplot2) ###  The relationship between monthly rent and average household income per CBSA in 2009.
@@ -462,10 +458,10 @@ ggplot(rent_income_2009, aes(x = household_income, y = monthly_rent)) +
   theme_minimal()
 ```
 
-
 The scatter plot shows a strong positive relationship between average household income and monthly rent across CBSAs in 2009. Areas with higher household incomes tend to have higher average rents, as indicated by the upward sloping linear trend line. This suggests that housing costs scale proportionally with income levels, reflecting higher demand and cost of living in wealthier regions.
 
-## The relationship between total employment and total employment in the health care and social services sector (NAICS 62) across different CBSAs. 
+## The relationship between total employment and total employment in the health care and social services sector (NAICS 62) across different CBSAs.
+
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -500,7 +496,8 @@ ggplot(employment_combined, aes(x = total_employment, y = health_employment, col
 
 The scatter plot illustrates a strong positive relationship between total employment and employment in the health care and social services sector across CBSAs. As total employment increases, health sector employment also rises proportionally, indicating that larger labor markets sustain larger health care workforces.
 
-## The evolution of average household size over time. 
+## The evolution of average household size over time.
+
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -520,9 +517,7 @@ ggplot(household_size, aes(x = year, y = avg_household_size, group = GEOID)) +
   theme_minimal()
 ```
 
-
 The line plot shows the evolution of average household size across all CBSAs from 2009 to 2023. The trends indicate that household sizes have remained relatively stable nationwide, typically ranging between 2.5 and 3.0 persons per household. While a few metropolitan areas show small fluctuations or gradual increases, the overall pattern suggests minimal change in household composition over time.
-
 
 ## The relationship between monthly rent and average household income per CBSA in 2009.
 
@@ -545,10 +540,10 @@ ggplot(rent_income_2009, aes(x = household_income, y = monthly_rent)) +
   theme_minimal()
 ```
 
-
 The scatter plot above displays the relationship between average household income and monthly rent across CBSAs in 2009. Each point represents a metropolitan area, and the red line shows the linear trend between the two variables. There is a clear positive relationship: CBSAs with higher household incomes tend to have higher average monthly rents. This pattern suggests that housing costs scale with income levels, reflecting the higher demand and living costs typically found in wealthier regions.
 
-## The relationship between total employment and total employment in the health care and social services sector (NAICS 62) across different CBSAs. 
+## The relationship between total employment and total employment in the health care and social services sector (NAICS 62) across different CBSAs.
+
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -581,9 +576,10 @@ ggplot(employment_joined, aes(x = total_employment, y = health_employment, color
   theme_minimal()
 ```
 
-The scatter plot above shows a  positive relationship between total employment and employment in the health care and social services sector (NAICS 62) across CBSAs. Larger labor markets consistently employ more people in health care, reflecting the sector’s critical role in urban economies. The colors represent different years, showing how this relationship has evolved over time. The upward shift in later years suggests that employment in health care has grown faster than total employment, highlighting the sector’s steady expansion and increasing economic significance across the country.
+The scatter plot above shows a positive relationship between total employment and employment in the health care and social services sector (NAICS 62) across CBSAs. Larger labor markets consistently employ more people in health care, reflecting the sector’s critical role in urban economies. The colors represent different years, showing how this relationship has evolved over time. The upward shift in later years suggests that employment in health care has grown faster than total employment, highlighting the sector’s steady expansion and increasing economic significance across the country.
 
-## The evolution of average household size over time. 
+## The evolution of average household size over time.
+
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -604,12 +600,10 @@ ggplot(avg_household_size, aes(x = year, y = avg_household_size, group = NAME)) 
   theme_minimal()
 ```
 
-
 The line chart illustrates the evolution of average household size across CBSAs from 2009 to 2023. Each line represents a different metropolitan area, showing how household size varies regionally and over time. Overall, household size remains relatively stable, with most CBSAs clustered between 2.4 and 3.0 people per household. While some areas show slight increases or decreases, there is no significant long-term trend, indicating that household composition across the United States has remained largely consistent over the past decade.
 
+## Baseline value around which the metric is centered.
 
-
-## Baseline value around which the metric is centered. 
 ```{r}
 library(dplyr)
 
@@ -636,11 +630,11 @@ data_joined <- data_joined |>
   mutate(rent_burden_index = (rent_burden / baseline_avg) * 100) # Standarize 100 average rent burden in first year
 head(data_joined)
 ```
-Baseline average rent burden = 19.40%
-First year = 2009
-In 2009, the average U.S. resident spent about 19.4% of their income on rent.
 
-##  Standardizing my metric to increase interpretability.
+Baseline average rent burden = 19.40% First year = 2009 In 2009, the average U.S. resident spent about 19.4% of their income on rent.
+
+## Standardizing my metric to increase interpretability.
+
 ```{r}
 
 data_joined <- data_joined |>
@@ -729,9 +723,11 @@ datatable(
   rownames = FALSE
 ) # Lowest 10
 ```
+
 The rent burden metric that I created shows clear differences in housing affordability across metropolitan areas in the United States. In the New York–Newark–Jersey City metro area, the rent burden stayed consistently between 1.10× and 1.18× the 2009 baseline, which means that residents continue to face significant affordability challenges. On the other hand, metros with the lowest rent burdens, such as Albertville, AL and Mount Airy, NC, have values closer to 0.7× the national baseline, showing that housing costs are much lower compared to income levels. This contrast emphasizes the uneven distribution of housing pressures nationwide and supports the idea that YIMBY-style housing policies are needed to increase supply and improve affordability in high-demand regions.
 
 ## Housing Growth
+
 ```{r}
 library(dplyr)
 
@@ -832,14 +828,13 @@ datatable(
   rownames = FALSE
 ) # composite growth score
 ```
-Taken together, the rent burden and housing growth metrics paint a clear picture of the U.S. housing landscape.
-High-demand metros like New York and Florida regions face strong affordability pressures but mixed construction responses. Meanwhile, smaller metros in the South and Midwest show lower rent burdens and higher relative building activity.
-The composite index highlights metros effectively balancing population and housing growth, key evidence for promoting YIMBY-style zoning reforms to encourage more housing development in constrained markets.
+
+Taken together, the rent burden and housing growth metrics paint a clear picture of the U.S. housing landscape. High-demand metros like New York and Florida regions face strong affordability pressures but mixed construction responses. Meanwhile, smaller metros in the South and Midwest show lower rent burdens and higher relative building activity. The composite index highlights metros effectively balancing population and housing growth, key evidence for promoting YIMBY-style zoning reforms to encourage more housing development in constrained markets.
 
 The metros with the lowest composite housing growth scores (including Johnstown, PA, Decatur, IL, and Weirton–Steubenville, WV–OH) exhibit particularly weak housing supply responses. These regions permit very few new units relative to both population size and growth. Although some of these areas are not experiencing extreme affordability crises, their lack of development reflects deeper structural barriers to growth. YIMBY-oriented federal incentives could help such areas revitalize local housing markets, attract new residents, and improve overall economic resilience.
 
-
 ## VISUALIZATION
+
 I examined the relationship between rent burden and housing growth using CBSA-level data. A CBSA was classified as YIMBY if it had high early rent burden, decreasing rent burden over time, positive population growth, and above-average housing growth.
 
 ```{R}
@@ -922,7 +917,6 @@ classified %>%
   select(cbsa, rb_early, rb_change, pop_growth_pct, housing_cagr) #  identified YIMBY CBSAs 
 ```
 
-
 ```{R}
 ggplot(df, aes(x = year, y = rent_burden, group = cbsa)) +
   geom_line(color = "gray80", linewidth = 0.4, alpha = 0.6) +
@@ -963,8 +957,9 @@ ggplot(df, aes(x = year, y = rent_burden, group = cbsa)) +
 
 ggsave("YIMBY_rent_trend.png", width = 8, height = 6, dpi = 300)
 ```
-Las Vegas–Paradise and Palm Coast stand out visually.
-Their rent burden trends slightly downward while most CBSAs trend upward — supporting your argument.
+
+Las Vegas–Paradise and Palm Coast stand out visually. Their rent burden trends slightly downward while most CBSAs trend upward — supporting your argument.
+
 ```{R}
 classified_adj <- classified %>%
   filter(
@@ -1015,19 +1010,13 @@ ggplot(classified_adj, aes(x = housing_cagr, y = rb_change)) +
 ggsave("YIMBY_scatter_adjusted.png", width = 8, height = 6, dpi = 300)
 ```
 
-Bottom-right quadrant = YIMBY success zone
-rent decreased (y < 0)
-housing growth above mean (x > 0)
-Las Vegas–Paradise and Palm Coast appear here → strong YIMBY cases. Most CBSAs cluster around (0, 0), meaning stagnant housing and moderate rent increases.
+Bottom-right quadrant = YIMBY success zone rent decreased (y \< 0) housing growth above mean (x \> 0) Las Vegas–Paradise and Palm Coast appear here → strong YIMBY cases. Most CBSAs cluster around (0, 0), meaning stagnant housing and moderate rent increases.
 
-## Policy brief 
-**Federal “Build Homes Where People Need Them” Act **
+## Policy brief
 
+**Federal “Build Homes Where People Need Them” Act**
 
-Many metros face high rents because housing supply hasn’t kept up with population and jobs.
-My analysis of CBSAs (metro areas) identifies places where adding homes coincided with lower rent burden and continued population growth—a “YIMBY success.”
-
-
+Many metros face high rents because housing supply hasn’t kept up with population and jobs. My analysis of CBSAs (metro areas) identifies places where adding homes coincided with lower rent burden and continued population growth—a “YIMBY success.”
 
 Primary sponsor: A representative from Las Vegas–Paradise, NV (YIMBY success in our study).
 
@@ -1050,7 +1039,6 @@ Construction trades (carpenters, electricians, plumbers, operating engineers)
 Why they care: Predictable, faster approvals create steady job pipelines and apprenticeships.
 
 How the bill helps: Funding is unlocked only when municipalities legalize enough homes, that means more projects and longer-run job security without boom-bust cycles.
-
 
 What the bill does (high level)
 
