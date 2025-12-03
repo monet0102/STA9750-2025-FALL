@@ -1,0 +1,278 @@
+---
+title: "STA 9750 Mini-Project #04: Just the Fact(-Check)s, Ma’am!"
+author: "Monet"
+format:
+  html:
+    code-fold: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+
+#INTRODUCTION
+
+The Current Employment Statistics (CES) program is one of the most influential sources of monthly economic data in the United States, providing early estimates of payroll employment used by policymakers, journalists, and financial markets. Because these first estimates are released quickly—often within days of the reference period—they are frequently revised as more complete information becomes available. These revisions sometimes become the subject of public debate, especially when political actors interpret them as evidence of bias, incompetence, or economic manipulation.
+
+This mini-project investigates the accuracy and behavior of CES revisions over the past 45 years. Using data scraped directly from the Bureau of Labor Statistics (BLS), I combine the historical CES employment levels with the published monthly revision tables to construct a unified dataset of initial estimates, final estimates, and revision magnitudes. I then perform exploratory data analysis to understand long-run patterns, seasonal effects, and the overall size and direction of revisions. Finally, I apply formal statistical inference using the infer package to test whether revisions are systematically biased and whether
+# DATA ACQUISTION
+```{R}
+library(httr2)
+library(rvest)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(tidyverse)
+
+
+url <- "https://data.bls.gov/pdq/SurveyOutputServlet"
+
+
+resp <- request(url) |>
+  req_method("POST") |>
+  req_body_form(
+    series_id    = "CEU0000000001",
+    years_option = "specific_years",
+    from_year    = "1979",
+    to_year      = "2025",
+    date_option  = "all_periods",
+    output_type  = "column"
+  ) |>
+  req_perform()
+
+
+html <- resp |> resp_body_html()
+
+
+tables <- html |> html_elements("table")
+table_raw <- tables[[2]] |> html_table()
+
+
+df <- table_raw |>
+
+  filter(str_detect(Period, "^M\\d{2}$")) |>
+  
+
+  mutate(date_string = paste(Year, Period)) |>
+  
+
+  mutate(date = ym(str_replace(date_string, "M", ""))) |>
+  
+
+  mutate(level = as.numeric(Value)) |>
+  
+
+  select(date, level) |>
+  
+
+  drop_na()
+
+df
+```
+
+# CES Revisions
+```{R}
+library(httr2)
+library(rvest)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(purrr)
+
+
+resp <- request("https://www.bls.gov/web/empsit/cesnaicsrev.htm") |>
+  req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X)") |>
+  req_perform()
+
+html <- resp |> resp_body_html()
+
+
+tables <- html |> html_elements("table")
+
+
+sizes <- sapply(tables, \(x) nrow(html_table(x, header = FALSE)))
+
+
+revision_indexes <- which(sizes == 17)
+
+
+clean_revision_table <- function(tbl_raw) {
+
+
+  df <- html_table(tbl_raw, header = FALSE)
+
+  
+  df12 <- df |> slice(4:15)
+
+ 
+  df_clean <- df12 |> 
+    select(
+      month = 1,
+      year  = 2,
+      original = 4,
+      final = 6
+    ) |>
+    mutate(
+      original = as.numeric(original),
+      final = as.numeric(final),
+      date_string = paste(year, month),
+      date = ym(date_string),
+      revision = final - original
+    ) |>
+    select(date, original, final, revision)
+
+  df_clean
+}
+
+
+revision_list <- map(revision_indexes, \(i) clean_revision_table(tables[[i]]))
+
+
+ces_revisions <- bind_rows(revision_list)
+
+ces_revisions
+```
+# Data Integration and Exploration
+```{r}
+library(dplyr)
+library(lubridate)
+
+ces_joined <- df %>%
+left_join(ces_revisions, by = "date") %>%
+mutate(
+year = year(date),
+month = month(date, label = TRUE),
+abs_revision = abs(revision),
+pct_revision = revision / final,
+abs_pct_revision = abs(pct_revision)
+)
+
+ces_45 <- ces_joined %>%
+filter(year >= max(year) - 44)
+
+revision_stats <- ces_45 %>%
+summarise(
+mean_revision = mean(revision, na.rm = TRUE),
+median_revision = median(revision, na.rm = TRUE),
+mean_abs_revision = mean(abs_revision, na.rm = TRUE),
+median_abs_revision = median(abs_revision, na.rm = TRUE)
+)
+revision_stats # Mean and median revisions (raw level)
+
+percent_revision_stats <- ces_45 %>%
+summarise(
+mean_abs_pct_revision = mean(abs_pct_revision, na.rm = TRUE),
+median_abs_pct_revision = median(abs_pct_revision, na.rm = TRUE)
+)
+percent_revision_stats # Mean and median percent revisions
+
+frac_positive <- ces_45 %>%
+summarise(frac_positive = mean(revision > 0, na.rm = TRUE))
+frac_positive # Fraction of positive revisions
+
+frac_pos_decade <- ces_45 %>%
+mutate(decade = floor(year / 10) * 10) %>%
+group_by(decade) %>%
+summarise(frac_positive = mean(revision > 0, na.rm = TRUE))
+frac_pos_decade # Fraction of positive revisions by decade
+
+largest_revisions <- bind_rows(
+ces_45 %>% slice_max(revision, n = 1),
+ces_45 %>% slice_min(revision, n = 1)
+)
+largest_revisions # Largest positive and largest negative revisions in 45 years
+
+month_effects <- ces_45 %>%
+group_by(month) %>%
+summarise(mean_abs_rev = mean(abs_revision, na.rm = TRUE))
+month_effects # Average absolute revision by month (seasonality)
+```
+
+### ggplot Visualizations
+```{r}
+library(ggplot2)
+ggplot(ces_45, aes(date, final)) +
+geom_line() +
+labs(
+title = "CES Employment Level Over Time (Final Estimates)",
+x = "Year",
+y = "Employment Level"
+) # CES Final Employment Level Over Time
+
+ggplot(ces_45, aes(date, revision)) +
+geom_col() +
+labs(
+title = "CES Revisions (Final minus Original)",
+x = "Year",
+y = "Revision Amount"
+) # CES Revisions Over Time
+
+yearly_pct <- ces_45 %>%
+group_by(year) %>%
+summarise(mean_abs_pct = mean(abs_pct_revision, na.rm = TRUE))
+
+ggplot(yearly_pct, aes(year, mean_abs_pct)) +
+  geom_line() +
+  labs(
+    title = "Average Absolute Percent Revision by Year",
+    x = "Year",
+    y = "Mean |Revision| / Final"
+  )
+ # Average Absolute Percent Revision by Year
+
+ggplot(ces_45, aes(month, revision)) +
+geom_boxplot() +
+labs(
+title = "Distribution of CES Revisions by Month",
+x = "Month",
+y = "Revision Amount"
+) # Boxplot of Revisions by Month
+```
+
+# Statistical Analysis
+
+While exploratory data analysis helps identify patterns in CES revisions, we also want to assess whether the patterns we observe are larger than what we would expect from random variation. To do this, we use formal hypothesis tests from the infer package. These tests allow us to quantify whether the mean revision differs from zero and whether the proportion of negative revisions has changed over time.
+
+I will conduct two statistical tests:
+
+Is the average CES revision significantly different from zero?
+
+Has the fraction of negative revisions changed since 2000?
+
+Both of these questions speak directly to the accuracy and reliability of the CES first estimates.
+
+### Is the average CES revision significantly different from zero? 
+
+```{r}
+library(infer)
+
+mean_revision_test <- ces_45 |>
+  t_test(revision ~ NULL, mu = 0)
+
+mean_revision_test
+ library(infer)
+
+mean_revision_test <- ces_45 |>
+  t_test(revision ~ NULL, mu = 0)
+
+mean_revision_test
+```
+Based on a one-sample t-test, the average CES revision over the past 45 years is estimated to be –119 jobs, meaning that first-release CES estimates tend to overstate employment levels. The test statistic is t = –2.87 with 526 degrees of freedom, and the associated p-value is 0.0043.
+
+### Has the fraction of negative revisions changed since 2000?
+
+```{r}
+ces_45 <- ces_45 |>
+  mutate(post_2000 = year >= 2000,
+         neg_revision = revision < 0)
+
+neg_revision_test <- ces_45 |>
+  prop_test(neg_revision ~ post_2000,
+            order = c("FALSE", "TRUE"))
+
+neg_revision_test
+```
+To test whether negative CES revisions became more or less common after 2000, I used a two-sample test for proportions. The test statistic is χ² = 0.00206 with 1 degree of freedom, and the p-value is 0.964.
+
+Because the p-value is extremely large (much greater than 0.05), we fail to reject the null hypothesis. There is no statistical evidence that the fraction of negative revisions differs between the pre-2000 and post-2000 periods.
