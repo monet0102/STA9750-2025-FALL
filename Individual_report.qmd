@@ -9,17 +9,14 @@ advisor: "Professor Michael Weylandt"
 format:
   html:
     theme: journal
+    code-fold: true
+    code-summary: "Show/Hide Code"
     toc: true
     toc-location: left
     toc-depth: 3
     smooth-scroll: true
-    code-fold: true
-    code-summary: "Show/Hide Code"
-
-execute:
-  echo: true
-  message: false
-  warning: false
+    page-layout: full
+    fig-path: images/
 ---
 
 # How does the percentage of foreign-born residents relate to healthcare access in NYC?
